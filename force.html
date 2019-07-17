@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <style>
+    *{
+      font-family: "Helvetica Neue"
+    }
+    p, text {
+      font-size: 0.85em;
+      }
+    /* svg {
+     // background: #fcfcfc;
+    } */
+  </style>
+</head>
+
+<body>
+  <button id="decade">Split by year
+  2016/2017</button>
+  <button id="combine">Combine</button>
+  <div id="chart"></div>
+  
+  <script>
+    
+    (function() {
+      var width = 900,
+          height = 700;
+      
+      var svg = d3.select("#chart")
+      	.append("svg")
+      	.attr("height", height)
+      	.attr("width", width)
+      	.append("g")
+      	.attr("transform", "translate(0,0)")
+      
+      var color = d3.scaleLinear()
+  .domain(900)
+  .range(["#fbb4ae", "#ccebc5", "#9ecae1", "#c6dbef", "#deebf7", "#fbb4ae", "#e5d8bd", "#ffffcc", "#fddaec", "#fed9a6"])
+      
+      //var div = d3.select("body").append("div")
+      //	.attr("class", "tooltip")
+      //	.style("opacity", 0)
+      
+      var tooltip = d3.select("body")
+      	.append("div")
+      	.style('position', "absolute")
+      	.style("z-index", '10')
+      	.style("visibility", "hidden")
+      	
+      
+      var radiusScale = d3.scaleSqrt().domain([5.5, 8.9]).range([2, 45])
+      
+      var forceXSeparate = d3.forceX(function(d) {
+        if (d.year == '2016') {
+            return 200
+            } else {
+           return 700 
+            }
+          }).strength(0.05)
+      
+      var forceXCombine = d3.forceX(width / 2).strength(0.04)
+      
+      var forceCollide = d3.forceCollide(function(d) {
+        return radiusScale(d.rate) + 0.5 
+      })
+      
+      //simulation forces the circles to go
+      //and interact
+      var simulation = d3.forceSimulation()
+      	.force("x", forceXCombine)
+      	.force("y", d3.forceY(height/2).strength(0.04))
+      	.force("collide", forceCollide)
+      
+      d3.queue()
+      	.defer(d3.csv, "data/iee.csv")
+      	.await(ready)
+      
+      function ready (error, datapoints) {
+        
+        var circles = svg.selectAll(".titles")
+        	.data(datapoints)
+        	.enter().append("circle")
+        	.attr("class", "titles")
+        	.attr("r", function(d) {
+            return radiusScale(d.rate)
+          })
+        	.attr("fill", function(d) {
+            if (d.genre == '(drama)') {
+            return "#fbb4ae" } 
+            if (d.genre == '(comedy)') {
+              return "#ccebc5"  }
+            if (d.genre == '(horror)') {
+              return "#9ecae1" }
+            if (d.genre == '(thriller)') {
+              return "#c6dbef" }
+            if (d.genre == '(criminal)') {
+              return "#deebf7" }
+            if (d.genre == '(melodrama)') {
+                return "#fbb4ae"}
+            if (d.genre == '(biography)') {
+                return "#fbb4ae"}
+            if (d.genre == '(detective)') {
+                return "#e5d8bd"}
+            if (d.genre == '(fantasy)') {
+                return "#ffffcc"}
+            if (d.genre == '(documentary)') {
+                return "#fddaec"}
+            if (d.genre == '(history)') {
+                return "#fddaec"}
+            if (d.genre == '(musical)') {
+              return "#fed9a6"
+            }
+            else {
+           return "#decbe4"   } 
+          })
+        	.on('click', function(d) {
+            console.log(d)
+          })
+        	.on('mouseover', function(d) {
+          	return tooltip.style("visibility", "visible")
+            .html(d.titles)
+            		})
+        	.on('mousemove', function() {
+          	return tooltip.style("top", (event.pageY-10) + "px").style("left", (event.pageX + 10) + "px")
+          })
+        	.on("mouseout", function() {
+            return tooltip.style("visibility", "hidden")
+          })
+          
+        
+				
+        d3.select('#decade').on('click', function() {
+          simulation
+          	.force("x", forceXSeparate)
+          	.alphaTarget(0.5)
+          	.restart()
+        })
+        
+        d3.select('#combine').on('click', function() {
+          simulation
+          	.force("x", forceXCombine)
+          	.alphaTarget(0.5)
+          	.restart()
+          })
+        
+        simulation.nodes(datapoints)
+        	.on('tick', ticked)
+        
+        function ticked() {
+          circles
+          	.attr("cx", function(d) {
+            return d.x
+          })
+          	.attr("cy", function(d) {
+            return d.y
+          })
+   
+ }      
+      }
+    })();
+  </script>
+</body>
